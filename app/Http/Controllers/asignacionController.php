@@ -2,83 +2,97 @@
 
 namespace App\Http\Controllers;
 
+use App\asignacion;
+use App\cola;
+use App\mesa;
+use App\mesero;
 use Illuminate\Http\Request;
 
 class asignacionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        //
+        asignacionController::asignado();
+        return view('asignacion.index', [
+            'mesas' => mesa::get(),
+            'meseros' => cola::orderBy('created_at', 'ASC')->get()
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         //
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        //
+
+    }
+    public static function asignado()
+    {
+        $mesasTem = mesa::get();
+        foreach($mesasTem as $mesaTem){
+            $asignada = asignacion::where([
+                'fecha' => date('Y-m-d'),
+                'mesaId' => $mesaTem->mesaId,
+                'final' => null
+            ])->first();
+            if($asignada == null){
+                mesa::where('mesaId', $mesaTem->mesaId)
+                    ->update(['estado' => 0
+                ]);
+            }
+        }
+    }
+    public function asignar($mesa)
+    {
+        $mesaTem = mesa::where('mesaId', $mesa)->first();
+        $meseroTem = cola::orderBy('created_at', 'ASC')->first();
+        asignacion::create([
+            'mesaId' => $mesaTem->mesaId,
+            'meseroId' => $meseroTem->meseroId,
+            'fecha' => date('Y-m-d'),
+        ]);
+        mesaController::cambiarEstado($mesaTem);
+        colaController::moverCola($meseroTem);
+
+        $nombre = $meseroTem->mesero->nombre;
+        return redirect()->route('asignacion.index')
+            ->with('success', "Mesa: $mesaTem->nombre asignada correctamente con el mesero: $nombre" );
+    }
+
+    public function terminar($mesa)
+    {
+        $asignacion = asignacion::where([
+            'mesaId' => $mesa,
+            'final' => null,
+            'total' => null
+        ])->first();
+        asignacion::where('asignacionId', $asignacion->asignacionId)
+            ->update(['final' => date('H:i:s')
+        ]);
+        mesaController::cambiarEstado( mesa::where('mesaId', $mesa)->first() );
+        return redirect()->route('asignacion.index')
+            ->with('success', "Mesa liberada Correctamente!" );
     }
 }

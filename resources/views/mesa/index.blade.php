@@ -8,10 +8,9 @@
     @include('includes.sessions')
 
     <div class="table-responsive">
-        <table class="table table-striped table-sm">
+        <table id="DataTable" class="table table-striped table-sm">
             <thead>
                 <tr>
-                    <th>#</th>
                     <th>Nombre</th>
                     <th>Descripcion</th>
                     <th>Acciones</th>
@@ -21,15 +20,10 @@
 
                 @foreach ($mesas as $mesa)
                     <tr>
-                        <td> 1 </td>
                         <td>{{ $mesa->nombre }}</td>
                         <td>{{ $mesa->descripcion }}</td>
                         <td>
                             <a href="{{ route('mesa.edit', $mesa) }}"><i data-feather="edit-2"></i></a>
-                            <form method="POST" action="{{ route('mesa.destroy', $mesa) }}">
-                                @csrf @method('DELETE')
-                                <button><i data-feather="trash-2"></i></button>
-                            </form>
                         </td>
                     </tr>
                 @endforeach
